@@ -39,7 +39,8 @@ pipeline, test harness, much of the runtime — is upstream's work. See
   high/low temperatures (rolling to tomorrow's as each extreme passes),
   steps, sleep, heart rate, active minutes, Bluetooth
   status, air quality (US AQI), UV index (the peak over the next 12 hours —
-  what's coming, not what already happened), a combined AQI/UV view, a short
+  what's coming, not what already happened), a combined AQI/UV view showing
+  the two as spot values side by side for a right-now safety glance, a short
   date (`THU 12-31`, top slots only), or .beat (Swatch Internet Time) — or
   leave empty.
 - **The middle slot** holds the date, a full-weather strip (condition,

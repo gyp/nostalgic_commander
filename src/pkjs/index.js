@@ -9,8 +9,8 @@ var WEATHER_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
 // watch guards each field) but worth completing at once rather than at the
 // next :00/:30 edge.
 var WEATHER_DICT_KEYS = [
-  'WEATHER_TEMP', 'WEATHER_COND', 'WEATHER_AQI', 'WEATHER_UV', 'WEATHER_HUMIDITY', 'WEATHER_PCP',
-  'WEATHER_HIGH', 'WEATHER_LOW', 'WEATHER_PRECIP_NOW', 'WEATHER_LOW_TOMORROW',
+  'WEATHER_TEMP', 'WEATHER_COND', 'WEATHER_AQI', 'WEATHER_UV', 'WEATHER_UV_NOW', 'WEATHER_HUMIDITY',
+  'WEATHER_PCP', 'WEATHER_HIGH', 'WEATHER_LOW', 'WEATHER_PRECIP_NOW', 'WEATHER_LOW_TOMORROW',
   'WEATHER_TEMP_HIGH_TOMORROW', 'WEATHER_HI_HOUR_TODAY', 'WEATHER_LO_HOUR_TODAY',
   'WEATHER_HI_HOUR_TOMORROW', 'WEATHER_LO_HOUR_TOMORROW', 'WEATHER_WIND_DIRECTION',
   'WEATHER_WIND_SPEED'
@@ -36,9 +36,11 @@ function retryWeather(attempt, reason) {
   setTimeout(function() { getWeather(attempt + 1); }, WEATHER_RETRY_DELAY_MS);
 }
 
-// The UV complication shows the peak over the coming window, not a calendar
-// day max (which is mostly about the past by evening) and not the instant
-// value (which reads 0 whenever the sun is low).
+// The standalone UV complication shows the peak over the coming window,
+// not a calendar day max (which is mostly about the past by evening) and
+// not the instant value (which reads 0 whenever the sun is low). The
+// combined AQI/UV complication uses the spot value instead — see the
+// hour-of-now pick in the loop below.
 var UV_WINDOW_HOURS = 12;
 
 function sendWeatherDict(dict, logLabel) {
@@ -149,6 +151,7 @@ function getWeather(attempt) {
                 'WEATHER_COND': forecast.cond,
                 'WEATHER_AQI': aqi,
                 'WEATHER_UV': forecast.uv,
+                'WEATHER_UV_NOW': forecast.uvNow,
                 'WEATHER_HUMIDITY': forecast.humidity,
                 'WEATHER_WIND_DIRECTION': forecast.windDirection,
                 'WEATHER_WIND_SPEED': forecast.windSpeed,
@@ -197,17 +200,30 @@ function getWeather(attempt) {
               }
               // -1 is the watch-side "no data" sentinel; the timestamp guard
               // windows what the API returns (the series now spans two days).
-              // Both readings below are next-12h maxima, computed in one pass.
+              // Two look-ahead maxima (UV, PCP) plus one spot value (uvNow —
+              // the hourly bucket at or before "now") in a single pass.
+              // Open-Meteo's `current` block does not expose uv_index, so the
+              // spot reading has to come from the hourly series.
               var uv = -1;
+              var uvNow = -1;
               var pcp = -1;
               if (json.hourly && json.hourly.time) {
-                var windowStart = Date.now() - 3600 * 1000;  // include the in-progress hour
-                var windowEnd = Date.now() + UV_WINDOW_HOURS * 3600 * 1000;
+                var now = Date.now();
+                var windowStart = now - 3600 * 1000;  // include the in-progress hour
+                var windowEnd = now + UV_WINDOW_HOURS * 3600 * 1000;
                 var uvArr = json.hourly.uv_index || [];
                 var pcpArr = json.hourly.precipitation_probability || [];
+                var uvNowT = -Infinity;
                 for (var i = 0; i < json.hourly.time.length; i++) {
                   var t = new Date(json.hourly.time[i]).getTime();
-                  if (!(t >= windowStart && t <= windowEnd)) continue;  // NaN-safe
+                  if (isNaN(t)) continue;
+                  // Spot UV: the value on the largest hourly bucket at or
+                  // before "now" — i.e. the hour containing this moment.
+                  if (t <= now && t > uvNowT && typeof uvArr[i] === 'number') {
+                    uvNowT = t;
+                    uvNow = uvArr[i];
+                  }
+                  if (!(t >= windowStart && t <= windowEnd)) continue;
                   if (typeof uvArr[i] === 'number' && uvArr[i] > uv) uv = uvArr[i];
                   // The API nulls probability where no precip is forecast at
                   // all; a window of nulls at least still reads "no data".
@@ -215,6 +231,7 @@ function getWeather(attempt) {
                 }
               }
               if (uv >= 0) uv = Math.round(uv);
+              if (uvNow >= 0) uvNow = Math.round(uvNow);
               if (pcp >= 0) pcp = Math.round(pcp);
 
               var daily = json.daily || {};
@@ -308,6 +325,7 @@ function getWeather(attempt) {
                 temp: temp,
                 cond: cond,
                 uv: uv,
+                uvNow: uvNow,
                 humidity: humidity,
                 windDirection: windDirection,
                 windSpeed: windSpeed,

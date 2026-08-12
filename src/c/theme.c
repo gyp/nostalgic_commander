@@ -169,9 +169,13 @@ GColor get_source_color(ComplicationDataSource source) {
       return temp_band_color(hi);
     }
     case DATA_SOURCE_AQI_UV: {
-      if (s_weather_aqi == -1 && s_weather_uv == -1) return s_active_theme->text_primary;
-      bool is_red = (s_weather_aqi > 100 || s_weather_uv >= 6);
-      bool is_yellow = (s_weather_aqi > 50 || s_weather_uv >= 3);
+      // Symmetric with the formatter: color the "right now" pair by the
+      // spot UV, not the 12h peak. Same thresholds (>=3 yellow, >=6 red);
+      // they simply fire while the sun is actually up rather than pre-warning
+      // for a peak still hours out.
+      if (s_weather_aqi == -1 && s_weather_uv_now == -1) return s_active_theme->text_primary;
+      bool is_red = (s_weather_aqi > 100 || s_weather_uv_now >= 6);
+      bool is_yellow = (s_weather_aqi > 50 || s_weather_uv_now >= 3);
       if (is_red) return s_active_theme->status_red;
       if (is_yellow) return s_active_theme->status_yellow;
       return s_active_theme->text_primary;

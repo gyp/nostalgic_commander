@@ -1246,14 +1246,17 @@ void test_get_source_data_should_format_aqi_and_uv(void) {
   get_source_data(DATA_SOURCE_UV, buf, sizeof(buf), NULL);
   TEST_ASSERT_EQUAL_STRING("5", buf);
 
-  // Combined AQI / UV formatting
+  // Combined AQI / UV formatting: both spot readings. The peak (s_weather_uv)
+  // is fed to the standalone UV complication only; it must not leak here.
   s_weather_aqi = -1;
-  s_weather_uv = -1;
+  s_weather_uv_now = -1;
+  s_weather_uv = 9;  // guardrail: the peak must not leak into the combined view
   get_source_data(DATA_SOURCE_AQI_UV, buf, sizeof(buf), NULL);
   TEST_ASSERT_EQUAL_STRING("-- --", buf);
 
   s_weather_aqi = 42;
-  s_weather_uv = 5;
+  s_weather_uv_now = 5;
+  s_weather_uv = 9;  // still guarded
   get_source_data(DATA_SOURCE_AQI_UV, buf, sizeof(buf), NULL);
   // Air joins the halves; the frame stubs (AQI/UV) carry the naming.
   TEST_ASSERT_EQUAL_STRING("42 5", buf);
@@ -1744,17 +1747,21 @@ void test_get_source_color_should_return_appropriate_colors(void) {
   s_weather_uv = 8;
   TEST_ASSERT_EQUAL_HEX(s_theme_panel.status_red, get_source_color(DATA_SOURCE_UV));
 
-  // AQI / UV combined: only a flagged half colors the pair
+  // AQI / UV combined: only a flagged half colors the pair, and the UV half
+  // reads the spot value — the peak (s_weather_uv) must not affect it.
   s_weather_aqi = 34;
-  s_weather_uv = 1;
+  s_weather_uv_now = 1;
+  s_weather_uv = 8;  // guard: the standalone peak must not color the combined view
   TEST_ASSERT_EQUAL_HEX(s_theme_panel.text_primary, get_source_color(DATA_SOURCE_AQI_UV));
 
   s_weather_aqi = 65;  // yellow
-  s_weather_uv = 1;
+  s_weather_uv_now = 1;
+  s_weather_uv = 8;  // still guarded
   TEST_ASSERT_EQUAL_HEX(s_theme_panel.status_yellow, get_source_color(DATA_SOURCE_AQI_UV));
 
   s_weather_aqi = 34;
-  s_weather_uv = 8;  // red
+  s_weather_uv_now = 8;  // red
+  s_weather_uv = 1;      // low peak, high spot — combined must color by spot
   TEST_ASSERT_EQUAL_HEX(s_theme_panel.status_red, get_source_color(DATA_SOURCE_AQI_UV));
 
   // Humidity is a plain readout like heart rate: outdoor RH has no
@@ -2380,6 +2387,7 @@ void test_inbox_should_parse_weather_payload_and_persist(void) {
   mock_dict_add_cstring(MESSAGE_KEY_WEATHER_COND, "SUN");
   mock_dict_add_int(MESSAGE_KEY_WEATHER_AQI, 42);
   mock_dict_add_int(MESSAGE_KEY_WEATHER_UV, 7);
+  mock_dict_add_int(MESSAGE_KEY_WEATHER_UV_NOW, 3);
   mock_dict_add_int(MESSAGE_KEY_WEATHER_HUMIDITY, 55);
   mock_dict_add_int(MESSAGE_KEY_WEATHER_PCP, 35);
   mock_dict_add_int(MESSAGE_KEY_WEATHER_PRECIP_NOW, 25);
@@ -2392,6 +2400,7 @@ void test_inbox_should_parse_weather_payload_and_persist(void) {
   TEST_ASSERT_EQUAL_STRING("SUN", s_weather_cond);
   TEST_ASSERT_EQUAL_INT(42, s_weather_aqi);
   TEST_ASSERT_EQUAL_INT(7, s_weather_uv);
+  TEST_ASSERT_EQUAL_INT(3, s_weather_uv_now);
   TEST_ASSERT_EQUAL_INT(55, s_weather_humidity);
   TEST_ASSERT_EQUAL_INT(35, s_weather_pcp);
   TEST_ASSERT_EQUAL_INT(25, s_precip_now);
@@ -2437,6 +2446,24 @@ void test_inbox_should_parse_and_persist_wind_direction(void) {
   s_weather_wind_direction = -1;
   TEST_ASSERT_TRUE(load_weather_cache());
   TEST_ASSERT_EQUAL_INT(270, s_weather_wind_direction);
+}
+
+void test_inbox_should_parse_and_persist_uv_now(void) {
+  mock_persist_reset();
+  mock_dict_reset();
+  mock_dict_add_int(MESSAGE_KEY_WEATHER_TEMP, 72);
+  mock_dict_add_cstring(MESSAGE_KEY_WEATHER_COND, "SUN");
+  mock_dict_add_int(MESSAGE_KEY_WEATHER_UV_NOW, 4);
+
+  inbox_received_callback(NULL, NULL);
+
+  TEST_ASSERT_EQUAL_INT(4, s_weather_uv_now);
+  TEST_ASSERT_TRUE(persist_exists(PERSIST_KEY_WEATHER_UV_NOW));
+  TEST_ASSERT_EQUAL_INT(4, persist_read_int(PERSIST_KEY_WEATHER_UV_NOW));
+
+  s_weather_uv_now = -1;
+  TEST_ASSERT_TRUE(load_weather_cache());
+  TEST_ASSERT_EQUAL_INT(4, s_weather_uv_now);
 }
 
 void test_wind_color_should_follow_the_beaufort_rungs(void) {
@@ -2997,6 +3024,7 @@ int main(void) {
   RUN_TEST(test_inbox_should_parse_weather_payload_and_persist);
   RUN_TEST(test_inbox_should_parse_and_persist_tomorrow_low);
   RUN_TEST(test_inbox_should_parse_and_persist_wind_direction);
+  RUN_TEST(test_inbox_should_parse_and_persist_uv_now);
   RUN_TEST(test_inbox_should_parse_and_persist_wind_speed);
   RUN_TEST(test_inbox_without_wind_should_leave_the_sentinel);
   RUN_TEST(test_inbox_should_parse_and_persist_extreme_rollover_keys);

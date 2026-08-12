@@ -229,6 +229,7 @@ typedef struct {
 #define MESSAGE_KEY_SETTINGS_DISCONNECT_VIBE 130
 #define MESSAGE_KEY_WEATHER_WIND_DIRECTION 131
 #define MESSAGE_KEY_WEATHER_WIND_SPEED 132
+#define MESSAGE_KEY_WEATHER_UV_NOW 133
 
 // --- Function Prototypes ---
 void app_event_loop(void);

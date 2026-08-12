@@ -27,6 +27,7 @@ void save_weather_cache(void) {
   persist_write_string_if_changed(PERSIST_KEY_WEATHER_COND, s_weather_cond);
   persist_write_int_if_changed(PERSIST_KEY_WEATHER_AQI, s_weather_aqi);
   persist_write_int_if_changed(PERSIST_KEY_WEATHER_UV, s_weather_uv);
+  persist_write_int_if_changed(PERSIST_KEY_WEATHER_UV_NOW, s_weather_uv_now);
   persist_write_int_if_changed(PERSIST_KEY_WEATHER_HUMIDITY, s_weather_humidity);
   persist_write_int_if_changed(PERSIST_KEY_WEATHER_WIND_DIRECTION, s_weather_wind_direction);
   persist_write_int_if_changed(PERSIST_KEY_WEATHER_WIND_SPEED, s_weather_wind_speed);
@@ -63,6 +64,9 @@ bool load_weather_cache(void) {
   }
   if (persist_exists(PERSIST_KEY_WEATHER_UV)) {
     s_weather_uv = persist_read_int(PERSIST_KEY_WEATHER_UV);
+  }
+  if (persist_exists(PERSIST_KEY_WEATHER_UV_NOW)) {
+    s_weather_uv_now = persist_read_int(PERSIST_KEY_WEATHER_UV_NOW);
   }
   if (persist_exists(PERSIST_KEY_WEATHER_HUMIDITY)) {
     s_weather_humidity = persist_read_int(PERSIST_KEY_WEATHER_HUMIDITY);
@@ -159,6 +163,11 @@ void inbox_received_callback(DictionaryIterator* iterator, void* context) {
   Tuple* uv_tuple = dict_find(iterator, MESSAGE_KEY_WEATHER_UV);
   if (uv_tuple) {
     s_weather_uv = uv_tuple->value->int32;
+  }
+
+  Tuple* uv_now_tuple = dict_find(iterator, MESSAGE_KEY_WEATHER_UV_NOW);
+  if (uv_now_tuple) {
+    s_weather_uv_now = uv_now_tuple->value->int32;
   }
 
   Tuple* humidity_tuple = dict_find(iterator, MESSAGE_KEY_WEATHER_HUMIDITY);

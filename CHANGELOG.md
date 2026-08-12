@@ -4,6 +4,27 @@ All notable changes to Nostalgic Commander. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is
 [Semantic](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- **Combined AQI/UV window now shows spot values for both.** The AQI half was
+  already the instantaneous reading from Open-Meteo's `current` block; the
+  UV half switches from the next-12h peak to the value on the hourly bucket
+  containing "now" so the combined window answers one symmetric question:
+  "is it safe to go out right now?" — AQI + UV both as they are this hour.
+  The standalone UV complication is unchanged (still the next-12h peak, for
+  the morning-glance "how bad will today get" reading). Color thresholds
+  (yellow ≥3, red ≥6) unchanged; on the combined view they now fire when
+  the sun is actually up rather than pre-warning for a peak still hours out.
+
+### Added
+
+- **New `WEATHER_UV_NOW` message key + `s_weather_uv_now` cache slot**
+  feeding the combined complication in parallel with the existing
+  `WEATHER_UV` peak. Persist key `1032`; the on-disk format of every
+  existing key is unchanged.
+
 ## [1.4.1] - 2026-08-06
 
 ### Fixed

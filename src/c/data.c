@@ -14,6 +14,7 @@ int s_weather_temp = -999;  // -999 indicates no data
 char s_weather_cond[16] = "--";
 int s_weather_aqi = -1;             // -1 indicates no data
 int s_weather_uv = -1;              // -1 indicates no data
+int s_weather_uv_now = -1;          // -1 indicates no data; the hour-of-now value
 int s_weather_humidity = -1;        // -1 indicates no data
 int s_weather_wind_direction = -1;  // meteo bearing, degrees FROM; -1 indicates no data
 int s_weather_wind_speed = -1;      // in the settings unit (mph/m/s); -1 indicates no data
@@ -332,6 +333,10 @@ void get_source_data(ComplicationDataSource source, char* val_buf, int val_len, 
       }
       break;
     case DATA_SOURCE_AQI_UV: {
+      // Both halves are spot readings — AQI from Open-Meteo's `current`
+      // block, UV from the hourly bucket containing "now" — so this window
+      // answers "is it safe to go out right now" symmetrically. The
+      // look-ahead UV peak lives in the standalone UV complication.
       char aqi_str[8];
       char uv_str[8];
       if (s_weather_aqi == -1) {
@@ -339,10 +344,10 @@ void get_source_data(ComplicationDataSource source, char* val_buf, int val_len, 
       } else {
         snprintf(aqi_str, sizeof(aqi_str), "%d", s_weather_aqi);
       }
-      if (s_weather_uv == -1) {
+      if (s_weather_uv_now == -1) {
         snprintf(uv_str, sizeof(uv_str), "--");
       } else {
-        snprintf(uv_str, sizeof(uv_str), "%d", s_weather_uv);
+        snprintf(uv_str, sizeof(uv_str), "%d", s_weather_uv_now);
       }
       // Air joins the halves; the frame stubs carry the naming.
       snprintf(val_buf, val_len, "%s %s", aqi_str, uv_str);
