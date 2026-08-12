@@ -38,8 +38,14 @@ function retryWeather(attempt, reason) {
 
 // The UV complication shows the peak over the coming window, not a calendar
 // day max (which is mostly about the past by evening) and not the instant
-// value (which reads 0 whenever the sun is low).
-var UV_WINDOW_HOURS = 12;
+// value (which reads 0 whenever the sun is low). Three hours keeps the answer
+// aligned with "do I need sunscreen if I go out now" — long enough to catch a
+// spike an hour or two out, short enough not to average today's afternoon peak
+// into a morning reading.
+var UV_WINDOW_HOURS = 3;
+// PCP keeps its longer horizon: "will I need an umbrella today" is a
+// half-day question, not a "right now" one.
+var PCP_WINDOW_HOURS = 12;
 
 function sendWeatherDict(dict, logLabel) {
   try {
@@ -197,21 +203,29 @@ function getWeather(attempt) {
               }
               // -1 is the watch-side "no data" sentinel; the timestamp guard
               // windows what the API returns (the series now spans two days).
-              // Both readings below are next-12h maxima, computed in one pass.
+              // UV and PCP are both look-ahead maxima but over different
+              // horizons — walk the series once and gate each field by its
+              // own window.
               var uv = -1;
               var pcp = -1;
               if (json.hourly && json.hourly.time) {
                 var windowStart = Date.now() - 3600 * 1000;  // include the in-progress hour
-                var windowEnd = Date.now() + UV_WINDOW_HOURS * 3600 * 1000;
+                var uvWindowEnd = Date.now() + UV_WINDOW_HOURS * 3600 * 1000;
+                var pcpWindowEnd = Date.now() + PCP_WINDOW_HOURS * 3600 * 1000;
+                var scanEnd = Math.max(uvWindowEnd, pcpWindowEnd);
                 var uvArr = json.hourly.uv_index || [];
                 var pcpArr = json.hourly.precipitation_probability || [];
                 for (var i = 0; i < json.hourly.time.length; i++) {
                   var t = new Date(json.hourly.time[i]).getTime();
-                  if (!(t >= windowStart && t <= windowEnd)) continue;  // NaN-safe
-                  if (typeof uvArr[i] === 'number' && uvArr[i] > uv) uv = uvArr[i];
+                  if (!(t >= windowStart && t <= scanEnd)) continue;  // NaN-safe
+                  if (t <= uvWindowEnd && typeof uvArr[i] === 'number' && uvArr[i] > uv) {
+                    uv = uvArr[i];
+                  }
                   // The API nulls probability where no precip is forecast at
                   // all; a window of nulls at least still reads "no data".
-                  if (typeof pcpArr[i] === 'number' && pcpArr[i] > pcp) pcp = pcpArr[i];
+                  if (t <= pcpWindowEnd && typeof pcpArr[i] === 'number' && pcpArr[i] > pcp) {
+                    pcp = pcpArr[i];
+                  }
                 }
               }
               if (uv >= 0) uv = Math.round(uv);

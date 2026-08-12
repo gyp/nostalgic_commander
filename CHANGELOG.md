@@ -4,6 +4,18 @@ All notable changes to Nostalgic Commander. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is
 [Semantic](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- **UV window shortened to the next 3 hours** (from 12). The reading now
+  answers "do I need sunscreen if I go out now" rather than "what's the worst
+  the sun will do today"; the day-max framing skewed early-morning readings
+  toward the afternoon peak and buried tomorrow's forecast until midnight.
+  PCP keeps its 12-hour horizon — precipitation planning is a half-day
+  question, sun exposure is a right-now one. Color thresholds (yellow ≥3,
+  red ≥6) unchanged.
+
 ## [1.4.1] - 2026-08-06
 
 ### Fixed
