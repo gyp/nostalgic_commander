@@ -1238,25 +1238,22 @@ void test_get_source_data_should_format_aqi_and_uv(void) {
   TEST_ASSERT_EQUAL_STRING("42", buf);
 
   // UV formatting
-  s_weather_uv = -1;
+  s_weather_uv_peak = -1;
   get_source_data(DATA_SOURCE_UV, buf, sizeof(buf), NULL);
   TEST_ASSERT_EQUAL_STRING("--", buf);
 
-  s_weather_uv = 5;
+  s_weather_uv_peak = 5;
   get_source_data(DATA_SOURCE_UV, buf, sizeof(buf), NULL);
   TEST_ASSERT_EQUAL_STRING("5", buf);
 
-  // Combined AQI / UV formatting: both spot readings. The peak (s_weather_uv)
-  // is fed to the standalone UV complication only; it must not leak here.
+  // Combined AQI / UV formatting: both spot readings.
   s_weather_aqi = -1;
   s_weather_uv_now = -1;
-  s_weather_uv = 9;  // guardrail: the peak must not leak into the combined view
   get_source_data(DATA_SOURCE_AQI_UV, buf, sizeof(buf), NULL);
   TEST_ASSERT_EQUAL_STRING("-- --", buf);
 
   s_weather_aqi = 42;
   s_weather_uv_now = 5;
-  s_weather_uv = 9;  // still guarded
   get_source_data(DATA_SOURCE_AQI_UV, buf, sizeof(buf), NULL);
   // Air joins the halves; the frame stubs (AQI/UV) carry the naming.
   TEST_ASSERT_EQUAL_STRING("42 5", buf);
@@ -1729,39 +1726,36 @@ void test_get_source_color_should_return_appropriate_colors(void) {
   TEST_ASSERT_EQUAL_HEX(s_theme_panel.status_red, get_source_color(DATA_SOURCE_AQI));
 
   // UV likewise: mild sun is quiet; from 3 a thought, from 6 a warning
-  s_weather_uv = -1;
+  s_weather_uv_peak = -1;
   TEST_ASSERT_EQUAL_HEX(s_theme_panel.text_primary, get_source_color(DATA_SOURCE_UV));
 
-  s_weather_uv = 2;
+  s_weather_uv_peak = 2;
   TEST_ASSERT_EQUAL_HEX(s_theme_panel.text_primary, get_source_color(DATA_SOURCE_UV));
 
-  s_weather_uv = 3;
+  s_weather_uv_peak = 3;
   TEST_ASSERT_EQUAL_HEX(s_theme_panel.status_yellow, get_source_color(DATA_SOURCE_UV));
 
-  s_weather_uv = 5;
+  s_weather_uv_peak = 5;
   TEST_ASSERT_EQUAL_HEX(s_theme_panel.status_yellow, get_source_color(DATA_SOURCE_UV));
 
-  s_weather_uv = 6;
+  s_weather_uv_peak = 6;
   TEST_ASSERT_EQUAL_HEX(s_theme_panel.status_red, get_source_color(DATA_SOURCE_UV));
 
-  s_weather_uv = 8;
+  s_weather_uv_peak = 8;
   TEST_ASSERT_EQUAL_HEX(s_theme_panel.status_red, get_source_color(DATA_SOURCE_UV));
 
   // AQI / UV combined: only a flagged half colors the pair, and the UV half
-  // reads the spot value — the peak (s_weather_uv) must not affect it.
+  // reads the spot value.
   s_weather_aqi = 34;
   s_weather_uv_now = 1;
-  s_weather_uv = 8;  // guard: the standalone peak must not color the combined view
   TEST_ASSERT_EQUAL_HEX(s_theme_panel.text_primary, get_source_color(DATA_SOURCE_AQI_UV));
 
   s_weather_aqi = 65;  // yellow
   s_weather_uv_now = 1;
-  s_weather_uv = 8;  // still guarded
   TEST_ASSERT_EQUAL_HEX(s_theme_panel.status_yellow, get_source_color(DATA_SOURCE_AQI_UV));
 
   s_weather_aqi = 34;
   s_weather_uv_now = 8;  // red
-  s_weather_uv = 1;      // low peak, high spot — combined must color by spot
   TEST_ASSERT_EQUAL_HEX(s_theme_panel.status_red, get_source_color(DATA_SOURCE_AQI_UV));
 
   // Humidity is a plain readout like heart rate: outdoor RH has no
@@ -2006,7 +2000,7 @@ void test_weather_cache_should_round_trip_when_fresh(void) {
   s_weather_temp = 72;
   strcpy(s_weather_cond, "SUN");
   s_weather_aqi = 42;
-  s_weather_uv = 5;
+  s_weather_uv_peak = 5;
   s_weather_humidity = 55;
   s_weather_pcp = 35;
   s_precip_now = 25;
@@ -2025,7 +2019,7 @@ void test_weather_cache_should_round_trip_when_fresh(void) {
   s_weather_temp = -999;
   strcpy(s_weather_cond, "--");
   s_weather_aqi = -1;
-  s_weather_uv = -1;
+  s_weather_uv_peak = -1;
   s_weather_humidity = -1;
   s_weather_pcp = -1;
   s_precip_now = -1;
@@ -2043,7 +2037,7 @@ void test_weather_cache_should_round_trip_when_fresh(void) {
   TEST_ASSERT_EQUAL_INT(72, s_weather_temp);
   TEST_ASSERT_EQUAL_STRING("SUN", s_weather_cond);
   TEST_ASSERT_EQUAL_INT(42, s_weather_aqi);
-  TEST_ASSERT_EQUAL_INT(5, s_weather_uv);
+  TEST_ASSERT_EQUAL_INT(5, s_weather_uv_peak);
   TEST_ASSERT_EQUAL_INT(55, s_weather_humidity);
   TEST_ASSERT_EQUAL_INT(35, s_weather_pcp);
   TEST_ASSERT_EQUAL_INT(25, s_precip_now);
@@ -2119,7 +2113,7 @@ void test_weather_cache_should_keep_values_at_edge_of_window(void) {
   s_weather_temp = 18;
   strcpy(s_weather_cond, "RAIN");
   s_weather_aqi = 12;
-  s_weather_uv = 2;
+  s_weather_uv_peak = 2;
   save_weather_cache();
   // Just inside the freshness window
   persist_write_int(PERSIST_KEY_WEATHER_TIMESTAMP,
@@ -2386,7 +2380,7 @@ void test_inbox_should_parse_weather_payload_and_persist(void) {
   mock_dict_add_int(MESSAGE_KEY_WEATHER_TEMP, 72);
   mock_dict_add_cstring(MESSAGE_KEY_WEATHER_COND, "SUN");
   mock_dict_add_int(MESSAGE_KEY_WEATHER_AQI, 42);
-  mock_dict_add_int(MESSAGE_KEY_WEATHER_UV, 7);
+  mock_dict_add_int(MESSAGE_KEY_WEATHER_UV_PEAK, 7);
   mock_dict_add_int(MESSAGE_KEY_WEATHER_UV_NOW, 3);
   mock_dict_add_int(MESSAGE_KEY_WEATHER_HUMIDITY, 55);
   mock_dict_add_int(MESSAGE_KEY_WEATHER_PCP, 35);
@@ -2399,7 +2393,7 @@ void test_inbox_should_parse_weather_payload_and_persist(void) {
   TEST_ASSERT_EQUAL_INT(72, s_weather_temp);
   TEST_ASSERT_EQUAL_STRING("SUN", s_weather_cond);
   TEST_ASSERT_EQUAL_INT(42, s_weather_aqi);
-  TEST_ASSERT_EQUAL_INT(7, s_weather_uv);
+  TEST_ASSERT_EQUAL_INT(7, s_weather_uv_peak);
   TEST_ASSERT_EQUAL_INT(3, s_weather_uv_now);
   TEST_ASSERT_EQUAL_INT(55, s_weather_humidity);
   TEST_ASSERT_EQUAL_INT(35, s_weather_pcp);

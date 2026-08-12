@@ -22,7 +22,7 @@ All notable changes to Nostalgic Commander. Format follows
 
 - **New `WEATHER_UV_NOW` message key + `s_weather_uv_now` cache slot**
   feeding the combined complication in parallel with the existing
-  `WEATHER_UV` peak. Persist key `1032`; the on-disk format of every
+  `WEATHER_UV_PEAK` peak. Persist key `1032`; the on-disk format of every
   existing key is unchanged.
 
 ## [1.4.1] - 2026-08-06

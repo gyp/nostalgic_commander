@@ -194,7 +194,7 @@
             "value": "35"
           },
           {
-            "label": "AQI + UV Index (both current)",
+            "label": "AQI + UV Index (current)",
             "value": "18"
           }
         ]
@@ -258,7 +258,7 @@
             "value": "35"
           },
           {
-            "label": "AQI + UV Index (both current)",
+            "label": "AQI + UV Index (current)",
             "value": "18"
           }
         ]

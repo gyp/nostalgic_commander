@@ -46,9 +46,9 @@ extern int s_heart_rate;
 extern int s_weather_temp;
 extern char s_weather_cond[16];
 extern int s_weather_aqi;
-extern int s_weather_uv;
+extern int s_weather_uv_peak;
 // The instant UV reading — the hourly value for the hour containing "now".
-// Fed separately from `s_weather_uv` (the next-12h peak) so the two consumers
+// Fed separately from `s_weather_uv_peak` (the next-12h peak) so the two consumers
 // can diverge: DATA_SOURCE_UV keeps the look-ahead peak ("plan the day"), and
 // DATA_SOURCE_AQI_UV takes the spot reading so both halves of that combined
 // window answer the same "should I go out right now" question — AQI is

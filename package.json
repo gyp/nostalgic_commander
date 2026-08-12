@@ -41,7 +41,7 @@
       "SLOT_5",
       "SLOT_6",
       "WEATHER_AQI",
-      "WEATHER_UV",
+      "WEATHER_UV_PEAK",
       "WEATHER_HUMIDITY",
       "WEATHER_PCP",
       "WEATHER_HIGH",

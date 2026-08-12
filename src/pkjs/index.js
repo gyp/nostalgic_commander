@@ -9,11 +9,11 @@ var WEATHER_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
 // watch guards each field) but worth completing at once rather than at the
 // next :00/:30 edge.
 var WEATHER_DICT_KEYS = [
-  'WEATHER_TEMP', 'WEATHER_COND', 'WEATHER_AQI', 'WEATHER_UV', 'WEATHER_UV_NOW', 'WEATHER_HUMIDITY',
-  'WEATHER_PCP', 'WEATHER_HIGH', 'WEATHER_LOW', 'WEATHER_PRECIP_NOW', 'WEATHER_LOW_TOMORROW',
-  'WEATHER_TEMP_HIGH_TOMORROW', 'WEATHER_HI_HOUR_TODAY', 'WEATHER_LO_HOUR_TODAY',
-  'WEATHER_HI_HOUR_TOMORROW', 'WEATHER_LO_HOUR_TOMORROW', 'WEATHER_WIND_DIRECTION',
-  'WEATHER_WIND_SPEED'
+  'WEATHER_TEMP', 'WEATHER_COND', 'WEATHER_AQI', 'WEATHER_UV_PEAK', 'WEATHER_UV_NOW',
+  'WEATHER_HUMIDITY', 'WEATHER_PCP', 'WEATHER_HIGH', 'WEATHER_LOW', 'WEATHER_PRECIP_NOW',
+  'WEATHER_LOW_TOMORROW', 'WEATHER_TEMP_HIGH_TOMORROW', 'WEATHER_HI_HOUR_TODAY',
+  'WEATHER_LO_HOUR_TODAY', 'WEATHER_HI_HOUR_TOMORROW', 'WEATHER_LO_HOUR_TOMORROW',
+  'WEATHER_WIND_DIRECTION', 'WEATHER_WIND_SPEED'
 ];
 
 function isCompleteWeatherPayload(payload) {
@@ -150,7 +150,7 @@ function getWeather(attempt) {
                 'WEATHER_TEMP': forecast.temp,
                 'WEATHER_COND': forecast.cond,
                 'WEATHER_AQI': aqi,
-                'WEATHER_UV': forecast.uv,
+                'WEATHER_UV_PEAK': forecast.uvPeak,
                 'WEATHER_UV_NOW': forecast.uvNow,
                 'WEATHER_HUMIDITY': forecast.humidity,
                 'WEATHER_WIND_DIRECTION': forecast.windDirection,
@@ -204,7 +204,7 @@ function getWeather(attempt) {
               // the hourly bucket at or before "now") in a single pass.
               // Open-Meteo's `current` block does not expose uv_index, so the
               // spot reading has to come from the hourly series.
-              var uv = -1;
+              var uvPeak = -1;
               var uvNow = -1;
               var pcp = -1;
               if (json.hourly && json.hourly.time) {
@@ -224,13 +224,13 @@ function getWeather(attempt) {
                     uvNow = uvArr[i];
                   }
                   if (!(t >= windowStart && t <= windowEnd)) continue;
-                  if (typeof uvArr[i] === 'number' && uvArr[i] > uv) uv = uvArr[i];
+                  if (typeof uvArr[i] === 'number' && uvArr[i] > uvPeak) uvPeak = uvArr[i];
                   // The API nulls probability where no precip is forecast at
                   // all; a window of nulls at least still reads "no data".
                   if (typeof pcpArr[i] === 'number' && pcpArr[i] > pcp) pcp = pcpArr[i];
                 }
               }
-              if (uv >= 0) uv = Math.round(uv);
+              if (uvPeak >= 0) uvPeak = Math.round(uvPeak);
               if (uvNow >= 0) uvNow = Math.round(uvNow);
               if (pcp >= 0) pcp = Math.round(pcp);
 
@@ -324,7 +324,7 @@ function getWeather(attempt) {
               forecast = {
                 temp: temp,
                 cond: cond,
-                uv: uv,
+                uvPeak: uvPeak,
                 uvNow: uvNow,
                 humidity: humidity,
                 windDirection: windDirection,

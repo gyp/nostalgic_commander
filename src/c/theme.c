@@ -142,9 +142,9 @@ GColor get_source_color(ComplicationDataSource source) {
       if (s_weather_aqi > 50) return s_active_theme->status_yellow;
       return s_active_theme->text_primary;
     case DATA_SOURCE_UV:
-      if (s_weather_uv == -1) return s_active_theme->text_primary;
-      if (s_weather_uv >= 6) return s_active_theme->status_red;
-      if (s_weather_uv >= 3) return s_active_theme->status_yellow;
+      if (s_weather_uv_peak == -1) return s_active_theme->text_primary;
+      if (s_weather_uv_peak >= 6) return s_active_theme->status_red;
+      if (s_weather_uv_peak >= 3) return s_active_theme->status_yellow;
       return s_active_theme->text_primary;
     case DATA_SOURCE_WEATHER_PCP:
       if (weather_shows_precip_amount()) {

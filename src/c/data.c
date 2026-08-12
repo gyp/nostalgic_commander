@@ -13,7 +13,7 @@ int s_heart_rate = 0;       // Default to 0 (displays "--" if no HRM is present)
 int s_weather_temp = -999;  // -999 indicates no data
 char s_weather_cond[16] = "--";
 int s_weather_aqi = -1;             // -1 indicates no data
-int s_weather_uv = -1;              // -1 indicates no data
+int s_weather_uv_peak = -1;         // -1 indicates no data
 int s_weather_uv_now = -1;          // -1 indicates no data; the hour-of-now value
 int s_weather_humidity = -1;        // -1 indicates no data
 int s_weather_wind_direction = -1;  // meteo bearing, degrees FROM; -1 indicates no data
@@ -326,10 +326,10 @@ void get_source_data(ComplicationDataSource source, char* val_buf, int val_len, 
       }
       break;
     case DATA_SOURCE_UV:
-      if (s_weather_uv == -1) {
+      if (s_weather_uv_peak == -1) {
         snprintf(val_buf, val_len, "--");
       } else {
-        snprintf(val_buf, val_len, "%d", s_weather_uv);
+        snprintf(val_buf, val_len, "%d", s_weather_uv_peak);
       }
       break;
     case DATA_SOURCE_AQI_UV: {
