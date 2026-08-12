@@ -1,5 +1,5 @@
 {
-  "name": "nostalgic-commander",
+  "name": "nostalgic-commander-gyp",
   "author": "bemyak",
   "version": "1.5.0",
   "license": "PolyForm-Noncommercial-1.0.0",
@@ -11,8 +11,8 @@
     "@rebble/clay": "^1.0.3"
   },
   "pebble": {
-    "displayName": "Nostalgic Commander",
-    "uuid": "6fb9f373-9b0e-4e4c-bd23-6f7235486462",
+    "displayName": "Nostalgic Commander (gyp)",
+    "uuid": "d3fb0a4a-aeb9-4f50-8682-2e4aa229df23",
     "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [
