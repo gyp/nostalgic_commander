@@ -30,6 +30,9 @@
 #define PERSIST_KEY_WEATHER_WIND_DIRECTION 1030
 #define PERSIST_KEY_WEATHER_WIND_SPEED 1031
 #define PERSIST_KEY_WEATHER_COND_CODE 1032
+// Fork-added keys start above upstream's block, so pulling upstream can't
+// land two names on one key (1036/1037 are its chime settings).
+#define PERSIST_KEY_WEATHER_UV_NOW 1038
 
 #define PERSIST_KEY_SETTINGS_THEME 1010
 #define PERSIST_KEY_SETTINGS_UNITS 1011
