@@ -30,6 +30,10 @@
 #define PERSIST_KEY_WEATHER_WIND_DIRECTION 1030
 #define PERSIST_KEY_WEATHER_WIND_SPEED 1031
 #define PERSIST_KEY_WEATHER_COND_CODE 1032
+// Fork-added keys live at 2000+, far above upstream's 10xx block, so pulling
+// upstream can't land two names on one key. (1038 was this key until upstream
+// took it for LONGITUDE.)
+#define PERSIST_KEY_WEATHER_UV_NOW 2000
 
 #define PERSIST_KEY_SETTINGS_THEME 1010
 #define PERSIST_KEY_SETTINGS_UNITS 1011

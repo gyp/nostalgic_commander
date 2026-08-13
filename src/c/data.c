@@ -24,6 +24,7 @@ int s_weather_temp = WEATHER_TEMP_NONE;
 int s_weather_cond_code = WEATHER_NONE;  // WMO weather code
 int s_weather_aqi = WEATHER_NONE;
 int s_weather_uv = WEATHER_NONE;
+int s_weather_uv_now = WEATHER_NONE;
 int s_weather_humidity = WEATHER_NONE;
 int s_weather_wind_direction = WEATHER_NONE;  // meteo bearing, degrees FROM
 int s_weather_wind_speed = WEATHER_NONE;      // in the settings unit (mph/m/s)

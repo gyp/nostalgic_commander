@@ -70,6 +70,7 @@ static const MessageField s_weather_fields[] = {
     {&MESSAGE_KEY_WEATHER_COND, PERSIST_KEY_WEATHER_COND_CODE, &s_weather_cond_code, WEATHER_NONE},
     {&MESSAGE_KEY_WEATHER_AQI, PERSIST_KEY_WEATHER_AQI, &s_weather_aqi, WEATHER_NONE},
     {&MESSAGE_KEY_WEATHER_UV, PERSIST_KEY_WEATHER_UV, &s_weather_uv, WEATHER_NONE},
+    {&MESSAGE_KEY_WEATHER_UV_NOW, PERSIST_KEY_WEATHER_UV_NOW, &s_weather_uv_now, WEATHER_NONE},
     {&MESSAGE_KEY_WEATHER_HUMIDITY, PERSIST_KEY_WEATHER_HUMIDITY, &s_weather_humidity,
      WEATHER_NONE},
     {&MESSAGE_KEY_WEATHER_WIND_DIRECTION, PERSIST_KEY_WEATHER_WIND_DIRECTION,
@@ -156,6 +157,8 @@ static void sanitize_weather_values(void) {
   sanitize_int(&s_weather_aqi, WEATHER_NONE, 0, 500);
   cap_int(&s_weather_uv, 99);  // UV is open-ended (WHO top band is "11+")
   sanitize_int(&s_weather_uv, WEATHER_NONE, 0, 99);
+  cap_int(&s_weather_uv_now, 99);
+  sanitize_int(&s_weather_uv_now, WEATHER_NONE, 0, 99);
   sanitize_int(&s_weather_humidity, WEATHER_NONE, 0, 100);
   sanitize_int(&s_weather_pcp, WEATHER_NONE, 0, 100);
   sanitize_int(&s_precip_now, WEATHER_NONE, 0, 999);
