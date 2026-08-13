@@ -146,6 +146,11 @@ GColor get_source_color(ComplicationDataSource source) {
       if (s_weather_uv_peak >= 6) return s_active_theme->status_red;
       if (s_weather_uv_peak >= 3) return s_active_theme->status_yellow;
       return s_active_theme->text_primary;
+    case DATA_SOURCE_UV_NOW:
+      if (s_weather_uv_now == -1) return s_active_theme->text_primary;
+      if (s_weather_uv_now >= 6) return s_active_theme->status_red;
+      if (s_weather_uv_now >= 3) return s_active_theme->status_yellow;
+      return s_active_theme->text_primary;
     case DATA_SOURCE_WEATHER_PCP:
       if (weather_shows_precip_amount()) {
         // WMO intensity bands (mm over the past hour): light rain is calm;

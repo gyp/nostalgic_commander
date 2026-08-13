@@ -15,6 +15,7 @@ typedef enum {
   DATA_SOURCE_AQI = 16,
   DATA_SOURCE_UV = 17,
   DATA_SOURCE_AQI_UV = 18,
+  DATA_SOURCE_UV_NOW = 36,
   DATA_SOURCE_BEATS = 21,  // 19 is retired (UTC_OFFSET), 20 is EMPTY
   DATA_SOURCE_SHORT_DATE = 22,
   DATA_SOURCE_FULL_DATE = 23,
@@ -50,9 +51,9 @@ extern int s_weather_uv_peak;
 // The instant UV reading — the hourly value for the hour containing "now".
 // Fed separately from `s_weather_uv_peak` (the next-12h peak) so the two consumers
 // can diverge: DATA_SOURCE_UV keeps the look-ahead peak ("plan the day"), and
-// DATA_SOURCE_AQI_UV takes the spot reading so both halves of that combined
-// window answer the same "should I go out right now" question — AQI is
-// already spot-valued from Open-Meteo's `current` block.
+// DATA_SOURCE_UV_NOW / DATA_SOURCE_AQI_UV take the spot reading so the combined
+// window answers the same "should I go out right now" question on both halves —
+// AQI is already spot-valued from Open-Meteo's `current` block.
 extern int s_weather_uv_now;
 extern int s_weather_humidity;
 extern int s_weather_wind_direction;

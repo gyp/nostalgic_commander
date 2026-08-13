@@ -94,6 +94,7 @@ const char* get_source_label(ComplicationDataSource source) {
     case DATA_SOURCE_AQI:
       return "AQI";
     case DATA_SOURCE_UV:
+    case DATA_SOURCE_UV_NOW:
       return "UV";
     case DATA_SOURCE_AQI_UV:
     case DATA_SOURCE_HUM_PCP:
@@ -330,6 +331,13 @@ void get_source_data(ComplicationDataSource source, char* val_buf, int val_len, 
         snprintf(val_buf, val_len, "--");
       } else {
         snprintf(val_buf, val_len, "%d", s_weather_uv_peak);
+      }
+      break;
+    case DATA_SOURCE_UV_NOW:
+      if (s_weather_uv_now == -1) {
+        snprintf(val_buf, val_len, "--");
+      } else {
+        snprintf(val_buf, val_len, "%d", s_weather_uv_now);
       }
       break;
     case DATA_SOURCE_AQI_UV: {
