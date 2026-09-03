@@ -41,9 +41,10 @@ typedef enum {
 #define BATTERY_LOW_PCT 39
 #define BATTERY_CRIT_PCT 19
 
-// Goals are constants, not settings — the face has an opinion (AGENTS.md),
-// and every progress readout shares these.
-#define STEP_GOAL 10000
+// The step goal is the one goal users set (SETTINGS_STEP_GOAL); read it
+// through step_goal(), never s_settings_step_goal directly. The rest are
+// constants — the face has an opinion (AGENTS.md).
+#define STEP_GOAL_DEFAULT 10000
 #define SLEEP_GOAL_S (8 * 3600)
 #define ACTIVE_MINUTES_GOAL 30
 
@@ -140,6 +141,10 @@ extern int s_settings_crt_sound;
 extern int s_settings_weather_window;
 extern int s_settings_hourly_chime;
 extern int s_settings_chime_volume;
+// Daily step goal, in steps; the step percentage divides by it. Read it
+// through step_goal(), which substitutes the default for a torn value.
+extern int s_settings_step_goal;
+int step_goal(void);
 
 // Face geometry (margins, slot rects, TIME window, clock layer) lives in
 // layout.h.

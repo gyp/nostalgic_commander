@@ -261,6 +261,7 @@ extern uint32_t MESSAGE_KEY_SETTINGS_CRT_SOUND;
 extern uint32_t MESSAGE_KEY_SETTINGS_HOURLY_CHIME;
 extern uint32_t MESSAGE_KEY_SETTINGS_CHIME_VOLUME;
 extern uint32_t MESSAGE_KEY_CHIME_TEST;
+extern uint32_t MESSAGE_KEY_SETTINGS_STEP_GOAL;
 
 // Handler typedefs and result types, spelled as the SDK umbrella header has
 // them so prototypes below can match the SDK verbatim.

@@ -108,6 +108,7 @@ static const MessageField s_settings_fields[] = {
      &s_settings_hourly_chime, 0},
     {&MESSAGE_KEY_SETTINGS_CHIME_VOLUME, PERSIST_KEY_SETTINGS_CHIME_VOLUME,
      &s_settings_chime_volume, 0},
+    {&MESSAGE_KEY_SETTINGS_STEP_GOAL, PERSIST_KEY_SETTINGS_STEP_GOAL, &s_settings_step_goal, 0},
 };
 
 // The slot persist keys are deliberately not sequential (SLOT_6 landed after

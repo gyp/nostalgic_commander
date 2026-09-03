@@ -23,7 +23,7 @@ test('config has the heading, two sections, and submit in order', () => {
   assert.equal(config[1].type, 'section');
   assert.equal(config[2].type, 'section');
   assert.equal(config[3].type, 'submit');
-  assert.equal(config[1].items.length, 12);  // eight settings + test-sound pair
+  assert.equal(config[1].items.length, 13);  // nine settings + test-sound pair
   assert.equal(config[2].items.length, 7);   // heading + six slot selects
 });
 
@@ -42,7 +42,7 @@ test('every messageKey appears exactly once and every default is valid', () => {
       }
     }
   }
-  assert.equal(seen.size, 17);
+  assert.equal(seen.size, 18);
 });
 
 test('shipped defaults match the C-side boots', () => {

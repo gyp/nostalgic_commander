@@ -32,7 +32,7 @@ static void fmt_steps(char* buf, int len, int* percent) {
     // True progress, deliberately not clamped to 100: beating the goal is
     // worth seeing. Consumers clamp for their own needs — a progress bar
     // can only fill to its end, but the reading beside it keeps counting.
-    *percent = s_step_count > 0 ? (s_step_count * 100) / STEP_GOAL : 0;
+    *percent = s_step_count > 0 ? (s_step_count * 100) / step_goal() : 0;
   }
 }
 

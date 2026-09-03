@@ -62,7 +62,8 @@
       "WEATHER_WIND_DIRECTION",
       "WEATHER_WIND_SPEED",
       "WEATHER_REQUEST",
-      "WEATHER_UV_NOW"
+      "WEATHER_UV_NOW",
+      "SETTINGS_STEP_GOAL"
     ],
     "resources": {
       "media": [

@@ -63,6 +63,7 @@ int s_settings_crt_sound = 0;          // 1 = degauss sound at backlight-on (off
 int s_settings_hourly_chime = 0;       // 1 = POST beep on the hour, 0 = silenced (default)
 int s_settings_chime_volume =
     5;  // CHIME_DEFAULT_VOLUME; the JS defaults scrape parses this literal
+int s_settings_step_goal = 10000;  // STEP_GOAL_DEFAULT; the JS defaults scrape parses this
 
 ComplicationSlot s_complication_slots[NUM_SLOTS] = {
     [SLOT_IDX_TOP_LEFT] = {.box_rect = SLOT_RECT_TOP_LEFT, .source = DATA_SOURCE_WEATHER},
@@ -72,6 +73,12 @@ ComplicationSlot s_complication_slots[NUM_SLOTS] = {
                                 .source = DATA_SOURCE_HEART_RATE},
     [SLOT_IDX_BOTTOM_RIGHT] = {.box_rect = SLOT_RECT_BOTTOM_RIGHT, .source = DATA_SOURCE_BLUETOOTH},
     [SLOT_IDX_CENTER] = {.box_rect = SLOT_RECT_CENTER, .source = DATA_SOURCE_FULL_DATE}};
+
+// The goal the step percentage divides by. A torn wire value of 0 would
+// divide by zero, so anything non-positive reads as the default.
+int step_goal(void) {
+  return s_settings_step_goal > 0 ? s_settings_step_goal : STEP_GOAL_DEFAULT;
+}
 
 // The face's temperature spelling, unit-aware by policy: imperial prints the
 // unit letter and signs negatives only, metric always signs and letters

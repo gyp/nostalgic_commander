@@ -50,6 +50,7 @@ static void reset_all_state(void) {
   s_settings_crt_sound = 0;
   s_settings_hourly_chime = 0;
   s_settings_chime_volume = CHIME_DEFAULT_VOLUME;
+  s_settings_step_goal = STEP_GOAL_DEFAULT;
   // Regenerable content cache: reset so a first-use test doesn't inherit one.
   s_strike_pcm_ready = false;
   memset(s_strike_pcm, 0, sizeof(s_strike_pcm));
@@ -1140,6 +1141,34 @@ void test_get_source_data_should_format_steps(void) {
   TEST_ASSERT_EQUAL_INT(125, percent);
 }
 
+void test_step_percent_should_follow_the_configured_goal(void) {
+  char buf[16];
+  int percent = 0;
+
+  s_step_count = 5000;
+  s_settings_step_goal = 5000;
+  get_source_data(DATA_SOURCE_STEPS, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_STRING("5000", buf);  // the reading is steps, not a fraction
+  TEST_ASSERT_EQUAL_INT(100, percent);
+
+  s_settings_step_goal = 20000;
+  get_source_data(DATA_SOURCE_STEPS, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_INT(25, percent);
+
+  // The bar reads the same goal through the .backs chain.
+  get_source_data(DATA_SOURCE_STEPS_BAR, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_INT(25, percent);
+
+  // A torn wire value must not divide by zero: the default stands in.
+  s_settings_step_goal = 0;
+  TEST_ASSERT_EQUAL_INT(STEP_GOAL_DEFAULT, step_goal());
+  get_source_data(DATA_SOURCE_STEPS, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_INT(50, percent);
+
+  s_settings_step_goal = -1;
+  TEST_ASSERT_EQUAL_INT(STEP_GOAL_DEFAULT, step_goal());
+}
+
 void test_get_source_data_should_format_weather(void) {
   char buf[32];
 
@@ -1279,7 +1308,7 @@ void test_progress_bar_sources_should_reuse_their_plain_counterparts(void) {
   get_source_data(DATA_SOURCE_STEPS, buf, sizeof(buf), &percent);
   TEST_ASSERT_EQUAL_INT(250, percent);
 
-  s_step_count = 100 * STEP_GOAL;  // 10000% of goal
+  s_step_count = 100 * step_goal();  // 10000% of goal
   get_source_data(DATA_SOURCE_STEPS, buf, sizeof(buf), &percent);
   TEST_ASSERT_EQUAL_INT(10000, percent);
   TEST_ASSERT_TRUE(percent > BAR_VALUE_MAX);  // the bar is what clamps it
@@ -4632,6 +4661,7 @@ int main(void) {
   RUN_TEST(test_registry_health_metrics_match_the_reads_table);
   RUN_TEST(test_get_source_data_should_format_battery);
   RUN_TEST(test_get_source_data_should_format_steps);
+  RUN_TEST(test_step_percent_should_follow_the_configured_goal);
   RUN_TEST(test_get_source_data_should_format_weather);
 
   RUN_TEST(test_get_source_data_should_format_sleep);

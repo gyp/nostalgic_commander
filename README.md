@@ -70,6 +70,7 @@ deliberately few:
 | Date format | ISO, DOS, full text, short |
 | Short date format | Month-Day, Day-Month |
 | Day of week | Before date, after date, hidden |
+| Daily step goal | 5,000 to 20,000 steps; 10,000 (default) |
 | CRT effect | On, off (default) |
 | CRT degauss sound | On, off (default) |
 | Slots 1–6 | Data source per slot, or Empty |

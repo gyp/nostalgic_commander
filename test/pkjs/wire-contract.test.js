@@ -75,6 +75,7 @@ const EXPECTED_PERSIST = new Map([
   ['SETTINGS_CRT_SOUND', 'PERSIST_KEY_SETTINGS_CRT_SOUND'],
   ['SETTINGS_HOURLY_CHIME', 'PERSIST_KEY_SETTINGS_HOURLY_CHIME'],
   ['SETTINGS_CHIME_VOLUME', 'PERSIST_KEY_SETTINGS_CHIME_VOLUME'],
+  ['SETTINGS_STEP_GOAL', 'PERSIST_KEY_SETTINGS_STEP_GOAL'],
   ['SLOT_1', 'PERSIST_KEY_SLOT_1'],
   ['SLOT_2', 'PERSIST_KEY_SLOT_2'],
   ['SLOT_3', 'PERSIST_KEY_SLOT_3'],
@@ -241,6 +242,14 @@ const EXPECTED_SETTINGS_OPTIONS = {
   SETTINGS_HOURLY_CHIME: [['1', 'On'], ['0', 'Off']],
   SETTINGS_CHIME_VOLUME:
       [['5', '5%'], ['10', '10%'], ['25', '25%'], ['50', '50%'], ['75', '75%'], ['100', '100%']],
+  SETTINGS_STEP_GOAL: [
+    ['5000', '5,000 steps'],
+    ['7500', '7,500 steps'],
+    ['10000', '10,000 steps'],
+    ['12500', '12,500 steps'],
+    ['15000', '15,000 steps'],
+    ['20000', '20,000 steps'],
+  ],
 };
 
 test('every settings select offers exactly the pinned value ↔ label pairs', () => {
@@ -255,7 +264,7 @@ test('every settings select offers exactly the pinned value ↔ label pairs', ()
   }
   assert.deepEqual(
       Object.keys(actual).sort(), Object.keys(EXPECTED_SETTINGS_OPTIONS).sort(),
-      'the eight settings selects drifted');
+      'the eleven settings selects drifted');
   for (const [key, expected] of Object.entries(EXPECTED_SETTINGS_OPTIONS)) {
     assert.deepEqual(actual[key], expected, `option pair drift in ${key}`);
   }
@@ -276,7 +285,7 @@ test('the units select\'s values carry the same semantics as data.h\'s defines',
 });
 
 test('the C boot defaults equal the Clay shipped defaults', () => {
-  const boots = scrape.cBootDefaults();  // 14 entries; the scraper asserts its own coverage
+  const boots = scrape.cBootDefaults();  // 17 entries; the scraper asserts its own coverage
   const shipped = new Map();
   for (const section of config) {
     for (const item of section.items || []) {

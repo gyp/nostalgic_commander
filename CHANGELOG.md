@@ -4,6 +4,15 @@ All notable changes to Nostalgic Commander. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is
 [Semantic](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Daily step goal** setting: 5,000 / 7,500 / 10,000 (default) / 12,500 /
+  15,000 / 20,000 steps. It is what the steps percentage and the Steps
+  Progress bar's fill divide by; the sleep and active-minutes goals stay
+  constants.
+
 ## [1.9.0] - 2026-08-30
 
 ### Added

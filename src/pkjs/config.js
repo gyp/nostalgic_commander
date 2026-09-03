@@ -102,6 +102,10 @@ module.exports = [
                      ['0', 'Before date (THU 1970-12-31)'], ['1', 'After date (1970-12-31 THU)'],
                      ['2', 'Hidden (1970-12-31)']
                    ])),
+            select('SETTINGS_STEP_GOAL', 'Daily step goal', '10000', labeledOptions([
+                     ['5000', '5,000 steps'], ['7500', '7,500 steps'], ['10000', '10,000 steps'],
+                     ['12500', '12,500 steps'], ['15000', '15,000 steps'], ['20000', '20,000 steps']
+                   ])),
             select(
                 'SETTINGS_HOURLY_CHIME', 'Hourly chime (POST beep)', '0',
                 labeledOptions([['1', 'On'], ['0', 'Off']])),
