@@ -483,6 +483,53 @@ void test_battery_bar_should_fill_with_the_status_color(void) {
   }
 }
 
+void test_range_position_percent_should_map_clamp_and_sink_sentinels(void) {
+  // A sentinel anywhere — either end or the reading — means no position.
+  TEST_ASSERT_EQUAL_INT(-1, range_position_percent(-1, 8, 4, WEATHER_NONE));
+  TEST_ASSERT_EQUAL_INT(-1, range_position_percent(0, -1, 4, WEATHER_NONE));
+  TEST_ASSERT_EQUAL_INT(-1, range_position_percent(0, 8, -1, WEATHER_NONE));
+  TEST_ASSERT_EQUAL_INT(-1, range_position_percent(-999, 30, 20, WEATHER_TEMP_NONE));
+
+  // Proportional between the ends, both ends reachable.
+  TEST_ASSERT_EQUAL_INT(0, range_position_percent(0, 8, 0, WEATHER_NONE));
+  TEST_ASSERT_EQUAL_INT(50, range_position_percent(0, 8, 4, WEATHER_NONE));
+  TEST_ASSERT_EQUAL_INT(100, range_position_percent(0, 8, 8, WEATHER_NONE));
+
+  // Negative-family ranges are ordinary values, not near-sentinels.
+  TEST_ASSERT_EQUAL_INT(25, range_position_percent(-10, 10, -5, WEATHER_TEMP_NONE));
+
+  // Out-of-range readings clamp: the bar's ends ARE the period's extremes.
+  TEST_ASSERT_EQUAL_INT(0, range_position_percent(10, 20, 5, WEATHER_TEMP_NONE));
+  TEST_ASSERT_EQUAL_INT(100, range_position_percent(10, 20, 25, WEATHER_TEMP_NONE));
+
+  // A degenerate range (flat day, torn update) snaps to the nearest end.
+  TEST_ASSERT_EQUAL_INT(100, range_position_percent(5, 5, 5, WEATHER_NONE));
+  TEST_ASSERT_EQUAL_INT(0, range_position_percent(7, 5, 4, WEATHER_NONE));
+}
+
+void test_range_bar_colors_should_follow_their_readings_ladders(void) {
+  // The bar's own color is its fill's — the current reading's ladder — while
+  // each flank colors by its own value through the same exported ladders.
+  s_weather_uv_min = 0;
+  s_weather_uv = 8;
+  s_weather_uv_now = 1;
+  TEST_ASSERT_EQUAL_HEX(s_theme_panel.text_primary, get_source_color(DATA_SOURCE_UV_BAR));
+  s_weather_uv_now = 4;  // moderate spot: yellow fill, whatever the peak
+  TEST_ASSERT_EQUAL_HEX(s_theme_panel.status_yellow, get_source_color(DATA_SOURCE_UV_BAR));
+  s_weather_uv_now = WEATHER_NONE;
+  TEST_ASSERT_EQUAL_HEX(s_theme_panel.text_primary, get_source_color(DATA_SOURCE_UV_BAR));
+  TEST_ASSERT_EQUAL_HEX(s_theme_panel.text_primary, uv_status_color(s_weather_uv_min));
+  TEST_ASSERT_EQUAL_HEX(s_theme_panel.status_red, uv_status_color(s_weather_uv));
+
+  s_settings_units = UNITS_IMPERIAL;
+  s_weather_temp = 60;  // mild: plain fill even under a hot high
+  TEST_ASSERT_EQUAL_HEX(s_theme_panel.text_primary, get_source_color(DATA_SOURCE_TEMP_BAR));
+  s_weather_temp = 90;
+  TEST_ASSERT_EQUAL_HEX(s_theme_panel.status_red, get_source_color(DATA_SOURCE_TEMP_BAR));
+  TEST_ASSERT_EQUAL_HEX(s_theme_panel.accent_cold, temp_status_color(30));
+  TEST_ASSERT_EQUAL_HEX(s_theme_panel.text_primary, temp_status_color(WEATHER_TEMP_NONE));
+}
+
 void test_aqi_chip_should_band_only_on_an_attention_reading(void) {
   // Chip banding follows the strip's rule: a quiet reading draws plain text,
   // a flagged one fills — the thresholds stay in get_source_color alone.
@@ -707,7 +754,7 @@ void test_registry_rows_should_be_unique_and_resolve(void) {
   // resolves to a row with a real formatter. EMPTY is the one source allowed
   // to format nothing at all.
   const int count = (int)(sizeof(s_complication_specs) / sizeof(s_complication_specs[0]));
-  TEST_ASSERT_EQUAL_INT(32, count);  // one row per live enum value
+  TEST_ASSERT_EQUAL_INT(34, count);  // one row per live enum value
   for (int i = 0; i < count; i++) {
     const ComplicationSpec* row = &s_complication_specs[i];
     TEST_ASSERT_NOT_NULL(row->label);
@@ -741,6 +788,8 @@ void test_registry_should_pin_the_weather_backed_set(void) {
                                              DATA_SOURCE_AQI,
                                              DATA_SOURCE_UV,
                                              DATA_SOURCE_UV_NOW,
+                                             DATA_SOURCE_UV_BAR,
+                                             DATA_SOURCE_TEMP_BAR,
                                              DATA_SOURCE_AQI_UV,
                                              DATA_SOURCE_HUMIDITY,
                                              DATA_SOURCE_WIND,
@@ -1493,6 +1542,58 @@ void test_get_source_data_should_format_aqi_and_uv(void) {
   get_source_data(DATA_SOURCE_AQI_UV, buf, sizeof(buf), NULL);
   // Air joins the halves; the frame stubs (AQI/UV) carry the naming.
   TEST_ASSERT_EQUAL_STRING("42 2", buf);
+}
+
+void test_get_source_data_should_format_uv_bar(void) {
+  char buf[32];
+  int percent = -2;
+
+  // No data at all: three sentinels in the snapshot text, no fill position.
+  get_source_data(DATA_SOURCE_UV_BAR, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_STRING("-- -- --", buf);
+  TEST_ASSERT_EQUAL_INT(-1, percent);
+
+  // min, spot, max joined — the render gate hears any of the three move —
+  // and percent is the spot's POSITION in [min, max], not a goal fraction.
+  s_weather_uv_min = 0;
+  s_weather_uv_now = 4;
+  s_weather_uv = 8;
+  get_source_data(DATA_SOURCE_UV_BAR, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_STRING("0 4 8", buf);
+  TEST_ASSERT_EQUAL_INT(50, percent);
+
+  // A missing end sinks the position, not the readings that exist.
+  s_weather_uv_min = WEATHER_NONE;
+  get_source_data(DATA_SOURCE_UV_BAR, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_STRING("-- 4 8", buf);
+  TEST_ASSERT_EQUAL_INT(-1, percent);
+}
+
+void test_get_source_data_should_format_temp_bar(void) {
+  char buf[32];
+  int percent = -2;
+
+  // No data: format_temp's sentinel spelling on all three, no position.
+  get_source_data(DATA_SOURCE_TEMP_BAR, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_STRING("-- -- --", buf);
+  TEST_ASSERT_EQUAL_INT(-1, percent);
+
+  // Imperial spelling on every flank, like the other temperature readouts.
+  s_temp_low = 40;
+  s_weather_temp = 55;
+  s_temp_high = 60;
+  get_source_data(DATA_SOURCE_TEMP_BAR, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_STRING("40F 55F 60F", buf);
+  TEST_ASSERT_EQUAL_INT(75, percent);
+
+  // Metric signs everything, and the position follows the same math.
+  s_settings_units = UNITS_METRIC;
+  s_temp_low = 4;
+  s_weather_temp = 10;
+  s_temp_high = 12;
+  get_source_data(DATA_SOURCE_TEMP_BAR, buf, sizeof(buf), &percent);
+  TEST_ASSERT_EQUAL_STRING("+4C +10C +12C", buf);
+  TEST_ASSERT_EQUAL_INT(75, percent);
 }
 
 void test_get_source_data_should_format_humidity(void) {
@@ -2697,25 +2798,16 @@ void test_weather_field_table_should_pin_each_global_and_sentinel(void) {
   const struct {
     int* global;
     int sentinel;
-  } want[] = {{&s_weather_temp, -999},
-              {&s_weather_cond_code, -1},
-              {&s_weather_aqi, -1},
-              {&s_weather_uv, -1},
-              {&s_weather_uv_now, -1},
-              {&s_weather_humidity, -1},
-              {&s_weather_wind_direction, -1},
-              {&s_weather_wind_speed, -1},
-              {&s_weather_pcp, -1},
-              {&s_precip_now, -1},
-              {&s_temp_high, -999},
-              {&s_temp_low, -999},
-              {&s_temp_low_tmrw, -999},
-              {&s_temp_high_tmrw, -999},
-              {&s_hi_hour_today, -1},
-              {&s_lo_hour_today, -1},
-              {&s_hi_hour_tmrw, -1},
-              {&s_lo_hour_tmrw, -1},
-              {&s_weather_stamp, 0}};
+  } want[] = {{&s_weather_temp, -999},     {&s_weather_cond_code, -1},
+              {&s_weather_aqi, -1},        {&s_weather_uv, -1},
+              {&s_weather_uv_now, -1},     {&s_weather_uv_min, -1},
+              {&s_weather_humidity, -1},   {&s_weather_wind_direction, -1},
+              {&s_weather_wind_speed, -1}, {&s_weather_pcp, -1},
+              {&s_precip_now, -1},         {&s_temp_high, -999},
+              {&s_temp_low, -999},         {&s_temp_low_tmrw, -999},
+              {&s_temp_high_tmrw, -999},   {&s_hi_hour_today, -1},
+              {&s_lo_hour_today, -1},      {&s_hi_hour_tmrw, -1},
+              {&s_lo_hour_tmrw, -1},       {&s_weather_stamp, 0}};
   const unsigned rows = sizeof(s_weather_fields) / sizeof(s_weather_fields[0]);
   TEST_ASSERT_EQUAL_UINT(sizeof(want) / sizeof(want[0]), rows);
   for (unsigned w = 0; w < sizeof(want) / sizeof(want[0]); w++) {
@@ -5508,6 +5600,8 @@ int main(void) {
   RUN_TEST(test_bt_qt_wide_should_draw_both_checkboxes);
   RUN_TEST(test_steps_bar_should_fill_with_the_plain_text_color);
   RUN_TEST(test_battery_bar_should_fill_with_the_status_color);
+  RUN_TEST(test_range_position_percent_should_map_clamp_and_sink_sentinels);
+  RUN_TEST(test_range_bar_colors_should_follow_their_readings_ladders);
   RUN_TEST(test_aqi_chip_should_band_only_on_an_attention_reading);
   RUN_TEST(test_battery_complications_should_wear_green_while_charging);
   RUN_TEST(test_pcp_chip_should_band_on_attention_probability);
@@ -5543,6 +5637,8 @@ int main(void) {
   RUN_TEST(test_bt_qt_window_should_split_captions_only_at_top_width);
   RUN_TEST(test_get_source_data_should_format_active_minutes);
   RUN_TEST(test_get_source_data_should_format_aqi_and_uv);
+  RUN_TEST(test_get_source_data_should_format_uv_bar);
+  RUN_TEST(test_get_source_data_should_format_temp_bar);
   RUN_TEST(test_get_source_data_should_format_humidity);
   RUN_TEST(test_get_source_data_should_format_weather_full);
   RUN_TEST(test_full_weather_captions_should_align_with_the_strip);

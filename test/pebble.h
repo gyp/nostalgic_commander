@@ -237,6 +237,7 @@ extern uint32_t MESSAGE_KEY_WEATHER_LOW;
 extern uint32_t MESSAGE_KEY_WEATHER_AQI;
 extern uint32_t MESSAGE_KEY_WEATHER_UV;
 extern uint32_t MESSAGE_KEY_WEATHER_UV_NOW;
+extern uint32_t MESSAGE_KEY_WEATHER_UV_MIN;
 extern uint32_t MESSAGE_KEY_SLOT_1;
 extern uint32_t MESSAGE_KEY_SLOT_2;
 extern uint32_t MESSAGE_KEY_SLOT_3;

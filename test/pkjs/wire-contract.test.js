@@ -60,6 +60,7 @@ const EXPECTED_PERSIST = new Map([
   ['WEATHER_AQI', 'PERSIST_KEY_WEATHER_AQI'],
   ['WEATHER_UV', 'PERSIST_KEY_WEATHER_UV'],
   ['WEATHER_UV_NOW', 'PERSIST_KEY_WEATHER_UV_NOW'],
+  ['WEATHER_UV_MIN', 'PERSIST_KEY_WEATHER_UV_MIN'],
   ['WEATHER_HUMIDITY', 'PERSIST_KEY_WEATHER_HUMIDITY'],
   ['WEATHER_WIND_DIRECTION', 'PERSIST_KEY_WEATHER_WIND_DIRECTION'],
   ['WEATHER_WIND_SPEED', 'PERSIST_KEY_WEATHER_WIND_SPEED'],
@@ -193,6 +194,8 @@ const EXPECTED_SOURCE_LABELS = [
   ['DATA_SOURCE_SOLAR_HOUR_ANGLE', 'Solar hour angle'],
   ['DATA_SOURCE_SOLAR_ELEVATION', 'Solar elevation'],
   ['DATA_SOURCE_SOLAR_POSITION', 'Solar hour angle & elevation'],
+  ['DATA_SOURCE_UV_BAR', 'UV Range (now within window)'],
+  ['DATA_SOURCE_TEMP_BAR', 'Temperature Range (now within today)'],
 ];
 
 test('every slot option id Clay offers exists in ComplicationDataSource', () => {

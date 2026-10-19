@@ -36,11 +36,13 @@ var OPTION_LABELS = {
   36: 'Solar hour angle',
   37: 'Solar elevation',
   38: 'Solar hour angle & elevation',
+  101: 'UV Range (now within window)',
+  102: 'Temperature Range (now within today)',
 };
 
 var TOP_VALUES =
     ['20', '0', '32', '22', '21', '1', '2', '6', '10', '5', '30', '34', '35', '18', '38'];
-var CENTER_VALUES = ['23', '27', '24', '25'];
+var CENTER_VALUES = ['23', '27', '24', '25', '101', '102'];
 var BOTTOM_VALUES = [
   '20', '0', '9', '31', '21', '1', '2', '6', '10', '3', '28', '34', '26', '16', '17', '33', '36',
   '37'

@@ -158,6 +158,32 @@ static void fmt_aqi_uv(char* buf, int len, int* percent) {
   snprintf(buf, len, "%s %s", aqi_str, uv_str);
 }
 
+// The range bars' snapshot texts: all three readings (min, spot, max)
+// joined, so the render gate hears any end or the fill move; percent is the
+// fill POSITION within [min, max], not a goal fraction — -1 marks "no
+// position" (draw an empty track). The drawers re-derive the flank texts
+// through the same formatters, so gate and pixels can't disagree.
+static void fmt_uv_bar(char* buf, int len, int* percent) {
+  char lo[8], now[8], hi[8];
+  fmt_sentinel_reading(lo, sizeof(lo), s_weather_uv_min);
+  fmt_sentinel_reading(now, sizeof(now), s_weather_uv_now);
+  fmt_sentinel_reading(hi, sizeof(hi), s_weather_uv);
+  snprintf(buf, len, "%s %s %s", lo, now, hi);
+  if (percent)
+    *percent =
+        range_position_percent(s_weather_uv_min, s_weather_uv, s_weather_uv_now, WEATHER_NONE);
+}
+
+static void fmt_temp_bar(char* buf, int len, int* percent) {
+  char lo[8], now[8], hi[8];
+  format_temp(lo, sizeof(lo), s_temp_low, true);
+  format_temp(now, sizeof(now), s_weather_temp, true);
+  format_temp(hi, sizeof(hi), s_temp_high, true);
+  snprintf(buf, len, "%s %s %s", lo, now, hi);
+  if (percent)
+    *percent = range_position_percent(s_temp_low, s_temp_high, s_weather_temp, WEATHER_TEMP_NONE);
+}
+
 static void fmt_humidity(char* buf, int len, int* percent) {
   if (s_weather_humidity == WEATHER_NONE) {
     snprintf(buf, len, "--");
@@ -368,6 +394,23 @@ static const ComplicationSpec s_complication_specs[] = {
      .format = fmt_uv_now,
      .backs = DATA_SOURCE_UV_NOW,
      .draw = draw_banded_complication,
+     .needs_weather = true},
+    // The range bars: min and max flank a track whose fill position marks
+    // the current reading (see draw_range_bar). UV spans the forecast
+    // window's calm and peak; TMP spans today's low and high.
+    {.source = DATA_SOURCE_UV_BAR,
+     .health_metric = HEALTH_METRIC_NONE,
+     .label = "UV",
+     .format = fmt_uv_bar,
+     .backs = DATA_SOURCE_UV_BAR,
+     .draw = draw_uv_bar_complication,
+     .needs_weather = true},
+    {.source = DATA_SOURCE_TEMP_BAR,
+     .health_metric = HEALTH_METRIC_NONE,
+     .label = "TMP",
+     .format = fmt_temp_bar,
+     .backs = DATA_SOURCE_TEMP_BAR,
+     .draw = draw_temp_bar_complication,
      .needs_weather = true},
     {.source = DATA_SOURCE_AQI_UV,
      .health_metric = HEALTH_METRIC_NONE,

@@ -8,3 +8,9 @@
 // disagree about one reading. theme.c has the palettes; this file picks
 // from them.
 GColor get_source_color(ComplicationDataSource source);
+
+// The per-value ladders behind the temperature and UV cases, exported for
+// readouts that color several values of one kind at once (the range bars'
+// min/max flanks). Sentinels stay neutral, like everywhere else.
+GColor temp_status_color(int temp);
+GColor uv_status_color(int uv);

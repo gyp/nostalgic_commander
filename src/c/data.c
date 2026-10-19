@@ -25,6 +25,7 @@ int s_weather_cond_code = WEATHER_NONE;  // WMO weather code
 int s_weather_aqi = WEATHER_NONE;
 int s_weather_uv = WEATHER_NONE;
 int s_weather_uv_now = WEATHER_NONE;
+int s_weather_uv_min = WEATHER_NONE;
 int s_weather_humidity = WEATHER_NONE;
 int s_weather_wind_direction = WEATHER_NONE;  // meteo bearing, degrees FROM
 int s_weather_wind_speed = WEATHER_NONE;      // in the settings unit (mph/m/s)
@@ -89,6 +90,21 @@ void format_temp(char* buf, size_t len, int temp, bool with_unit) {
   } else {
     snprintf(buf, len, with_unit ? "%dF" : "%d", temp);
   }
+}
+
+// Where `value` sits inside [lo, hi], as 0..100. Any of the three at
+// `sentinel` means "no position" (-1): a bar with an unknown end or an
+// unknown reading has nothing honest to mark. A degenerate range (hi <= lo
+// — a flat day, or extremes arriving mid-update) snaps to the nearest end
+// instead of dividing by zero; out-of-range readings clamp, because the
+// bar's ends ARE the period's extremes.
+int range_position_percent(int lo, int hi, int value, int sentinel) {
+  if (lo == sentinel || hi == sentinel || value == sentinel) return -1;
+  if (hi <= lo) return value >= hi ? 100 : 0;
+  int percent = ((value - lo) * 100 + (hi - lo) / 2) / (hi - lo);
+  if (percent < 0) return 0;
+  if (percent > 100) return 100;
+  return percent;
 }
 
 // WMO weather codes → the face's condition words, plus whether the family

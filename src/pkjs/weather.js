@@ -17,6 +17,7 @@ var WEATHER_FIELDS = [
   {key: 'WEATHER_AQI', sentinel: -1},
   {key: 'WEATHER_UV', sentinel: -1},
   {key: 'WEATHER_UV_NOW', sentinel: -1},
+  {key: 'WEATHER_UV_MIN', sentinel: -1},
   {key: 'WEATHER_HUMIDITY', sentinel: -1},
   {key: 'WEATHER_WIND_DIRECTION', sentinel: -1},
   {key: 'WEATHER_WIND_SPEED', sentinel: -1},
@@ -176,6 +177,11 @@ function parseForecast(json, nowMs, windowHours) {
       if (!(ts >= windowStart && ts <= windowEnd)) continue;  // NaN-safe
       v = num(uvArr[i]);
       if (v !== undefined && v > out.WEATHER_UV) out.WEATHER_UV = v;
+      // The window minimum, the max's counterpart — the UV range bar's left
+      // anchor. Sentinel-started, so the first sample seeds it.
+      if (v !== undefined && (out.WEATHER_UV_MIN === -1 || v < out.WEATHER_UV_MIN)) {
+        out.WEATHER_UV_MIN = v;
+      }
       v = num(pcpArr[i]);
       if (v !== undefined && v > out.WEATHER_PCP) out.WEATHER_PCP = v;
       var uvHere = num(uvArr[i]);
@@ -186,6 +192,7 @@ function parseForecast(json, nowMs, windowHours) {
     }
     if (out.WEATHER_UV >= 0) out.WEATHER_UV = Math.round(out.WEATHER_UV);
     if (out.WEATHER_UV_NOW >= 0) out.WEATHER_UV_NOW = Math.round(out.WEATHER_UV_NOW);
+    if (out.WEATHER_UV_MIN >= 0) out.WEATHER_UV_MIN = Math.round(out.WEATHER_UV_MIN);
     if (out.WEATHER_PCP >= 0) out.WEATHER_PCP = Math.round(out.WEATHER_PCP);
 
     // Event hours of the four extremes: each day's argmin/argmax over the

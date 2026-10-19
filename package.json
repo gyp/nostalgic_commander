@@ -65,7 +65,8 @@
       "WEATHER_FETCHED_AT",
       "LONGITUDE",
       "LATITUDE",
-      "WEATHER_UV_NOW"
+      "WEATHER_UV_NOW",
+      "WEATHER_UV_MIN"
     ],
     "resources": {
       "media": [

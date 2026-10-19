@@ -59,18 +59,18 @@ function fullResponse() {
 
 test('field table declares every key once, with the contract sentinel', () => {
   const fields = weather.WEATHER_FIELDS;
-  assert.equal(fields.length, 19);
-  assert.equal(new Set(fields.map(f => f.key)).size, 19);
+  assert.equal(fields.length, 20);
+  assert.equal(new Set(fields.map(f => f.key)).size, 20);
   const sentinel = Object.fromEntries(fields.map(f => [f.key, f.sentinel]));
   for (const k
            of ['WEATHER_TEMP', 'WEATHER_HIGH', 'WEATHER_LOW', 'WEATHER_LOW_TOMORROW',
                'WEATHER_TEMP_HIGH_TOMORROW'])
     assert.equal(sentinel[k], -999, k);
   for (const k
-           of ['WEATHER_AQI', 'WEATHER_UV', 'WEATHER_UV_NOW', 'WEATHER_HUMIDITY', 'WEATHER_PCP',
-               'WEATHER_COND', 'WEATHER_PRECIP_NOW', 'WEATHER_WIND_DIRECTION', 'WEATHER_WIND_SPEED',
-               'WEATHER_HI_HOUR_TODAY', 'WEATHER_LO_HOUR_TODAY', 'WEATHER_HI_HOUR_TOMORROW',
-               'WEATHER_LO_HOUR_TOMORROW'])
+           of ['WEATHER_AQI', 'WEATHER_UV', 'WEATHER_UV_NOW', 'WEATHER_UV_MIN', 'WEATHER_HUMIDITY',
+               'WEATHER_PCP', 'WEATHER_COND', 'WEATHER_PRECIP_NOW', 'WEATHER_WIND_DIRECTION',
+               'WEATHER_WIND_SPEED', 'WEATHER_HI_HOUR_TODAY', 'WEATHER_LO_HOUR_TODAY',
+               'WEATHER_HI_HOUR_TOMORROW', 'WEATHER_LO_HOUR_TOMORROW'])
     assert.equal(sentinel[k], -1, k);
   assert.equal(sentinel['WEATHER_FETCHED_AT'], 0);
   assert.ok(isComplete(weather.sentinelPayload()));
@@ -157,6 +157,30 @@ test('UV and PCP are maxima over the coming window, including the in-progress ho
   // 6.3 stands, not 9.
   delete json.hourly.uv_index[12];
   assert.equal(weather.parseForecast(json, NOW).WEATHER_UV, 6);
+});
+
+test('WEATHER_UV_MIN is the minimum over the same window as the max', () => {
+  const json = fullResponse();
+  // In-window hours read 0 except the 15:00 peak; the floor is 0 while the
+  // out-of-window 05:00 spike stays excluded from both ends.
+  const out = weather.parseForecast(json, NOW);
+  assert.equal(out.WEATHER_UV_MIN, 0);
+  assert.equal(out.WEATHER_UV, 6);
+
+  // Raise the whole window's floor: min follows, rounded like the max.
+  for (let i = 12; i <= 24; i++) json.hourly.uv_index[i] = 2.4;
+  json.hourly.uv_index[15] = 6.3;
+  const raised = weather.parseForecast(json, NOW);
+  assert.equal(raised.WEATHER_UV_MIN, 2);
+  assert.equal(raised.WEATHER_UV, 6);
+});
+
+test('WEATHER_UV_MIN stays at the sentinel when the window has no UV samples', () => {
+  const json = fullResponse();
+  delete json.hourly.uv_index;
+  const out = weather.parseForecast(json, NOW);
+  assert.equal(out.WEATHER_UV_MIN, -1);
+  assert.equal(out.WEATHER_UV, -1);
 });
 
 test('a "Now" window reads the in-progress hour only', () => {

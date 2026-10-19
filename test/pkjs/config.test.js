@@ -62,7 +62,7 @@ test('the slot curation sets are exactly the pinned ones', () => {
   ];
   assert.deepEqual(values('SLOT_1'), top);
   assert.deepEqual(values('SLOT_2'), top);
-  assert.deepEqual(values('SLOT_6'), ['23', '27', '24', '25']);
+  assert.deepEqual(values('SLOT_6'), ['23', '27', '24', '25', '101', '102']);
   for (const bottomKey of ['SLOT_3', 'SLOT_4', 'SLOT_5']) {
     assert.deepEqual(values(bottomKey), bottom);
   }
@@ -103,5 +103,5 @@ test('every label in the master map is offered somewhere', () => {
   for (const key of ['SLOT_1', 'SLOT_2', 'SLOT_3', 'SLOT_4', 'SLOT_5', 'SLOT_6']) {
     for (const o of findSelect(key).options) offered.add(o.value);
   }
-  assert.equal(offered.size, 29);
+  assert.equal(offered.size, 31);
 });

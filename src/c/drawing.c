@@ -332,6 +332,78 @@ void draw_battery_bar_complication(GContext* ctx, GRect box_rect, ComplicationDa
   draw_progress_bar(ctx, box_rect, percent, true, get_source_color(DATA_SOURCE_BATTERY_BAR));
 }
 
+// A range bar: the period's minimum and maximum flank the track, each in its
+// own reading's status color, and the fill's END POSITION — not a goal
+// fraction — marks where the current value sits between them. Same band
+// geometry as draw_progress_bar (solid rect fill, ░ track); `position` -1
+// draws all track, the "no reading" face of the bar.
+static void draw_range_bar(GContext* ctx, GRect box_rect, const char* lo_text, GColor lo_color,
+                           const char* hi_text, GColor hi_color, int position, GColor fill) {
+  GRect band = status_band_rect(box_rect);
+  int cells = band.size.w / VGA16_CHAR_W;
+  int lo_len = strlen(lo_text);
+  int hi_len = strlen(hi_text);
+  int bar_cells = cells - lo_len - hi_len - 2;  // one cell of gap beside each flank
+  if (bar_cells < 1) return;
+
+  GRect row = value_row_rect(box_rect, band.origin.x, band.size.w, cells);
+
+  draw_run(ctx, row, 0, lo_text, lo_len, lo_color);
+
+  // Nearest-cell rounding, so a mid-range reading doesn't sit a whole cell
+  // shy of centre on wide bars.
+  int bar_at = lo_len + 1;
+  int filled = position < 0 ? 0 : (position * bar_cells + 50) / 100;
+  if (filled > 0) {
+    graphics_context_set_fill_color(ctx, fill);
+    graphics_fill_rect(ctx,
+                       GRect(row.origin.x + bar_at * VGA16_CHAR_W, band.origin.y,
+                             filled * VGA16_CHAR_W, VGA16_CELL_H),
+                       0, GCornerNone);
+  }
+  draw_shade_run(ctx, row, bar_at + filled, bar_cells - filled, BAR_TRACK, s_active_theme->frame);
+
+  draw_run(ctx, row, bar_at + bar_cells + 1, hi_text, hi_len, hi_color);
+}
+
+// A UV flank: the digits, or the "--" sentinel — the spelling every UV
+// readout uses (complication.c's fmt_sentinel_reading, privately).
+static void fmt_uv_flank(char* buf, size_t len, int uv) {
+  if (uv == WEATHER_NONE) {
+    snprintf(buf, len, "--");
+  } else {
+    snprintf(buf, len, "%d", uv);
+  }
+}
+
+// UV range: the forecast window's calm and peak flank the bar; the fill
+// marks the spot reading between them. Flanks and fill all read the one UV
+// ladder (uv_status_color / the UV_BAR case).
+void draw_uv_bar_complication(GContext* ctx, GRect box_rect, ComplicationDataSource source) {
+  (void)source;  // bound to one source; see the registry row
+  char lo[8], hi[8];
+  fmt_uv_flank(lo, sizeof(lo), s_weather_uv_min);
+  fmt_uv_flank(hi, sizeof(hi), s_weather_uv);
+  draw_range_bar(
+      ctx, box_rect, lo, uv_status_color(s_weather_uv_min), hi, uv_status_color(s_weather_uv),
+      range_position_percent(s_weather_uv_min, s_weather_uv, s_weather_uv_now, WEATHER_NONE),
+      get_source_color(DATA_SOURCE_UV_BAR));
+}
+
+// Temperature range: today's low and high flank the bar; the fill marks the
+// current temperature between them. Flanks spell and color like every other
+// temperature readout (format_temp / temp_status_color).
+void draw_temp_bar_complication(GContext* ctx, GRect box_rect, ComplicationDataSource source) {
+  (void)source;  // bound to one source; see the registry row
+  char lo[8], hi[8];
+  format_temp(lo, sizeof(lo), s_temp_low, true);
+  format_temp(hi, sizeof(hi), s_temp_high, true);
+  draw_range_bar(ctx, box_rect, lo, temp_status_color(s_temp_low), hi,
+                 temp_status_color(s_temp_high),
+                 range_position_percent(s_temp_low, s_temp_high, s_weather_temp, WEATHER_TEMP_NONE),
+                 get_source_color(DATA_SOURCE_TEMP_BAR));
+}
+
 void draw_short_date_complication(GContext* ctx, GRect box_rect, ComplicationDataSource source) {
   (void)source;  // bound to one source; see the registry row
   draw_date_text(ctx, box_rect, s_short_date_display);

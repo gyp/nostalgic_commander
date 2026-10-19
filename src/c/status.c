@@ -7,7 +7,7 @@
 // the solo temp, the HI/LO headline high, and the full-weather strip's TEMP
 // chip (via WEATHER_TEMP). The thresholds live here, once. A missing reading
 // stays neutral — "--" is neither hot nor cold.
-static GColor temp_band_color(int temp) {
+GColor temp_status_color(int temp) {
   if (temp == WEATHER_TEMP_NONE) return s_active_theme->text_primary;
   if (s_settings_units == UNITS_METRIC) {
     if (temp > 29) return s_active_theme->status_red;
@@ -16,6 +16,16 @@ static GColor temp_band_color(int temp) {
     if (temp > 85) return s_active_theme->status_red;
     if (temp < 40) return s_active_theme->accent_cold;
   }
+  return s_active_theme->text_primary;
+}
+
+// The WHO UV bands every UV reading colors by: moderate (3+) is worth a
+// thought, high (6+) a warning. Peak, spot, and the range bar's flanks all
+// read this one ladder.
+GColor uv_status_color(int uv) {
+  if (uv == WEATHER_NONE) return s_active_theme->text_primary;
+  if (uv >= 6) return s_active_theme->status_red;
+  if (uv >= 3) return s_active_theme->status_yellow;
   return s_active_theme->text_primary;
 }
 
@@ -58,7 +68,7 @@ GColor get_source_color(ComplicationDataSource source) {
         return s_active_theme->status_yellow;
       return s_active_theme->text_primary;
     case DATA_SOURCE_WEATHER_TEMP:
-      return temp_band_color(s_weather_temp);
+      return temp_status_color(s_weather_temp);
     // Clean air and mild sun are unremarkable: only a flagged reading
     // earns a color, and the band follows it.
     case DATA_SOURCE_AQI:
@@ -67,17 +77,19 @@ GColor get_source_color(ComplicationDataSource source) {
       if (s_weather_aqi > 50) return s_active_theme->status_yellow;
       return s_active_theme->text_primary;
     case DATA_SOURCE_UV:
-      if (s_weather_uv == WEATHER_NONE) return s_active_theme->text_primary;
-      if (s_weather_uv >= 6) return s_active_theme->status_red;
-      if (s_weather_uv >= 3) return s_active_theme->status_yellow;
-      return s_active_theme->text_primary;
+      return uv_status_color(s_weather_uv);
     // Same thresholds as the peak; they simply fire while the sun is actually
     // up rather than pre-warning for a peak still hours out.
     case DATA_SOURCE_UV_NOW:
-      if (s_weather_uv_now == -1) return s_active_theme->text_primary;
-      if (s_weather_uv_now >= 6) return s_active_theme->status_red;
-      if (s_weather_uv_now >= 3) return s_active_theme->status_yellow;
-      return s_active_theme->text_primary;
+    // The range bar's own color is its fill's: the spot reading whose
+    // position the fill marks. Its flanks color per-value through
+    // uv_status_color in the drawer.
+    case DATA_SOURCE_UV_BAR:
+      return uv_status_color(s_weather_uv_now);
+    // Like the UV bar: the fill wears the current temperature's band; the
+    // low/high flanks color themselves in the drawer.
+    case DATA_SOURCE_TEMP_BAR:
+      return temp_status_color(s_weather_temp);
     case DATA_SOURCE_WEATHER_PCP:
       if (weather_shows_precip_amount()) {
         // WMO intensity bands (mm over the past hour): light rain is calm;
@@ -98,7 +110,7 @@ GColor get_source_color(ComplicationDataSource source) {
       // passes, tomorrow's high takes the headline.
       int hi = high_low_displayed_high();
       if (hi == WEATHER_TEMP_NONE) return s_active_theme->text_primary;
-      return temp_band_color(hi);
+      return temp_status_color(hi);
     }
     case DATA_SOURCE_AQI_UV: {
       // Symmetric with fmt_aqi_uv: colour the "right now" pair by the spot

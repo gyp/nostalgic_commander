@@ -37,6 +37,8 @@ typedef enum {
   // upstream can't land two sources on one id. (UV_NOW was 36 until upstream
   // took it; it was never offered in Clay, so no slot persisted the old id.)
   DATA_SOURCE_UV_NOW = 100,
+  DATA_SOURCE_UV_BAR = 101,
+  DATA_SOURCE_TEMP_BAR = 102,
   // Retired ids: 19 (UTC_OFFSET), 29 (SUN_TIMES).
   DATA_SOURCE_EMPTY = 20
 } ComplicationDataSource;
@@ -81,6 +83,10 @@ extern int s_weather_uv;
 // AQI/UV combined window uses so both halves answer the same "should I go out
 // right now" question — AQI is already spot-valued from Open-Meteo's `current`.
 extern int s_weather_uv_now;
+// Window minimum, the counterpart of s_weather_uv's peak: the UV range bar
+// anchors its left end here so the fill position reads "where between the
+// window's calmest and harshest hour the sun sits right now".
+extern int s_weather_uv_min;
 extern int s_weather_humidity;
 extern int s_weather_wind_direction;
 extern int s_weather_wind_speed;
@@ -113,6 +119,11 @@ extern int s_wall_hour;
 // formatters and format_strip_temp share it.
 void format_temp(char* buf, size_t len, int temp, bool with_unit);
 
+// Where `value` sits inside [lo, hi], as 0..100 — the range bars' fill
+// position. -1 when any of the three reads `sentinel` (no fill); a
+// degenerate range (hi <= lo) snaps to its nearest end. Out-of-range values
+// clamp: the bar's ends ARE the period's extremes.
+int range_position_percent(int lo, int hi, int value, int sentinel);
 // The HI/LO pair as shown: each cell is the next occurrence of its kind,
 // sooner event left. Colors and the frame stub swap read the same helpers
 // below, so value, color, and captions never disagree.
